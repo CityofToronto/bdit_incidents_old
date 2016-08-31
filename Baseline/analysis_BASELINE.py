@@ -33,47 +33,63 @@ def readSegments(inSegments, month, day, n, engine):
         dfList.append(pandasql.read_sql(strSQL,engine))
     return dfList
 
-def baseline(dfList,percentile):
+def baseline(dfList,p):
     '''
     takes list of dataframes, pivots to inputed percentile 
     '''    
     
     ptList = []
     for seg in dfList:
-        seg = seg[(seg.Timestamp.dt.dayofweek != 6) & (seg.Timestamp.dt.dayofweek != 5) & (seg.Timestamp.dt.dayofweek != 4) & (seg.Timestamp.dt.dayofweek != 0)]
+        seg = seg[(seg.Timestamp.dt.dayofweek != 6) 
+                  & (seg.Timestamp.dt.dayofweek != 5) 
+                  & (seg.Timestamp.dt.dayofweek != 4) 
+                  & (seg.Timestamp.dt.dayofweek != 0)]
         seg['Time'] = seg.Timestamp.apply(lambda x: x.time())
-        ptList.append(pd.pivot_table(seg,index='Time',aggfunc=lambda x: np.percentile(x, percentile)))
+        ptList.append(pd.pivot_table(seg,
+                                     index='Time',
+                                     aggfunc=lambda x: np.percentile(x, p)))
+                                     
     df = ptList[0]
     for seg in ptList[1:]:
         df.AvgMeasuredTime += seg.AvgMeasuredTime
     return ptList[0]
 
+
 def baselineDrop(dfList):
     '''
-    list of dataframes, evaluates median of each timestamp, drop all timestamps less than 1.25x that of median, reevaluate median
+    evaluates median of each timestamp, 
+    drop all timestamps less than 1.25x that of median, reevaluate median
     returns series of baseline travel time 
     '''
     ptList = []
-    print('1')
     for seg in dfList:
-        seg = seg[(seg.Timestamp.dt.dayofweek != 6) & (seg.Timestamp.dt.dayofweek != 5) & (seg.Timestamp.dt.dayofweek != 4) & (seg.Timestamp.dt.dayofweek != 0)]
+        seg = seg[(seg.Timestamp.dt.dayofweek != 6) 
+                  & (seg.Timestamp.dt.dayofweek != 5) 
+                  & (seg.Timestamp.dt.dayofweek != 4) 
+                  & (seg.Timestamp.dt.dayofweek != 0)]
         seg['Time'] = seg.Timestamp.apply(lambda x: x.time())
-        ptList.append(pd.pivot_table(seg,index='Time',aggfunc=lambda x: np.percentile(x, 50)))#50 => median
-    print('2')
+        ptList.append(pd.pivot_table(seg,
+                                     index='Time',
+                                     aggfunc=lambda x: np.percentile(x, 50)))
     for i in range(len(dfList)):
-        print(i)
+        
         dfList[i]['Time'] = dfList[i].Timestamp.apply(lambda x: x.time())
-        for t in list(ptList[i].index): #iterate through each minute of a 24h clock   
-            #print(t)                     
-            dfList[i] = dfList[i][(dfList[i].Time != t) | ((dfList[i].Time == t) & (dfList[i].AvgMeasuredTime < 1.25*ptList[i].get_value(t,'AvgMeasuredTime')))]
+        for t in list(ptList[i].index): #iterate through each minute of a 24h clock                     
+            dfList[i] = dfList[i][(dfList[i].Time != t) 
+                                   | ((dfList[i].Time == t) 
+                                  & (dfList[i].AvgMeasuredTime 
+                                     < 1.25*ptList[i].get_value(t,'AvgMeasuredTime')))]
     ptList = []
-    print('3')
     for seg in dfList:
-        seg = seg[(seg.Timestamp.dt.dayofweek != 6) & (seg.Timestamp.dt.dayofweek != 5) & (seg.Timestamp.dt.dayofweek != 4) & (seg.Timestamp.dt.dayofweek != 0)]
+        seg = seg[(seg.Timestamp.dt.dayofweek != 6) 
+                  & (seg.Timestamp.dt.dayofweek != 5) 
+                  & (seg.Timestamp.dt.dayofweek != 4) 
+                  & (seg.Timestamp.dt.dayofweek != 0)]
         seg['Time'] = seg.Timestamp.apply(lambda x: x.time())
-        ptList.append(pd.pivot_table(seg,index='Time',aggfunc=lambda x: np.percentile(x, 50)))
+        ptList.append(pd.pivot_table(seg,
+                                     index='Time',
+                                     aggfunc=lambda x: np.percentile(x, 50)))
     df = ptList[0]
-    print('4')
     for seg in ptList[1:]:
         df.AvgMeasuredTime += seg.AvgMeasuredTime
     return ptList[0]
@@ -88,13 +104,24 @@ def baselinePlot(inSegments, month, day, baseline, engine):
     df.Timestamp = pd.to_datetime(df.Timestamp)
     for seg in segmentTimes[1:]:
         df.AvgMeasuredTime += seg.AvgMeasuredTime
+        
     plt.figure(figsize=(12,8),dpi=300)
     plt.plot(df.Timestamp, df.AvgMeasuredTime/60,'k')
     plt.plot(df.Timestamp, baseline.AvgMeasuredTime/60,'b')
-    plt.fill_between(df.Timestamp.as_matrix(),df.AvgMeasuredTime.as_matrix()/60,baseline.AvgMeasuredTime.as_matrix()/60,where=(baseline.AvgMeasuredTime/60 > df.AvgMeasuredTime/60),facecolor='green')    
-    plt.fill_between(df.Timestamp.as_matrix(),df.AvgMeasuredTime.as_matrix()/60,baseline.AvgMeasuredTime.as_matrix()/60,where=(baseline.AvgMeasuredTime/60 < df.AvgMeasuredTime/60),facecolor='red')    
+    plt.fill_between(df.Timestamp.as_matrix(),
+                     df.AvgMeasuredTime.as_matrix()/60,
+                     baseline.AvgMeasuredTime.as_matrix()/60,
+                     where
+                     = (baseline.AvgMeasuredTime/60 > df.AvgMeasuredTime/60),
+                     facecolor='green')    
+    plt.fill_between(df.Timestamp.as_matrix(),
+                     df.AvgMeasuredTime.as_matrix()/60,
+                     baseline.AvgMeasuredTime.as_matrix()/60,
+                     where
+                     = (baseline.AvgMeasuredTime/60 < df.AvgMeasuredTime/60),
+                     facecolor='red')    
     plt.show()
-    integral = np.trapz(y=df.AvgMeasuredTime.as_matrix(),x=df.Timestamp.as_matrix()) - np.trapz(y=baseline.AvgMeasuredTime.as_matrix(),x=df.Timestamp.as_matrix())
+    integral = np.trapz(y=df.AvgMeasuredTime.as_matrix(), x=df.Timestamp.as_matrix()) - np.trapz(y=baseline.AvgMeasuredTime.as_matrix(),x=df.Timestamp.as_matrix())
     return integral
     
 
