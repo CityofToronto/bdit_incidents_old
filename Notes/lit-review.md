@@ -61,9 +61,34 @@ Evaluation (pp. 57-59)
  
 **Auto TT reliability**
  - [ ] John Bates et al. “The valuation of reliability for personal travel”. In: Transportation Research Part E: Logistics and Transportation Review 37.2 (2001), pp. 191–229.  
- - [ ] Tim Lomax et al. “Selecting travel reliability measures”. In: Texas Transportation
+ - [X] Tim Lomax et al. “Selecting travel reliability measures”. In: Texas Transportation
 Institute monograph (May 2003) (2003).
- - [ ] Office of Operations Federal Highway Administration. Travel Time Reliability: Making It There On Time, All The Time. 2013. url: http://ops.fhwa.dot.gov/publications/tt_reliability/brochure/.
+ - [x] Office of Operations Federal Highway Administration. Travel Time Reliability: Making It There On Time, All The Time. 2013. url: http://ops.fhwa.dot.gov/publications/tt_reliability/brochure/.
 
 **Metric design**  
 - [ ] Mark Abkowitz et al. Transit Service Reliability. Tech. rep. U.S. Dept. of Transportation, 1978.
+
+## Lomax, Tim, and R. Margiotta. Selecting Travel Reliability Measures. 
+http://lyle.smu.edu/emis/cmmi5/Ibarra/DeskTop/White_Papers/Reliability/Travel_Reliability.pdf
+### Intro
+>The terms “recurring” and “non-recurring” congestion are misnomers—variations in weather, traffic volume and a range of other factors can be termed “recurring” but have traditionally been included outside the “regular” congestion label. 
+
+#### What Components should be included?
+>Trip planning decisions can be informed by data that is targeted for the expected variation in travel time at their usual departure time. Measures that might be useful would typically focus on specific trip patterns or corridors and specific hours of the day—areawide or subregional measures grouped in long time blocks would be less useful for this purpose.  System or corridor evaluations, however, might be best identified with hour-to-hour, day-to-day and annual trend information. 
+
+### Developing an approach
+
+>**Traffic volume and speed will not be representative under some circumstances**—
+During 
+incident conditions, for example, vehicles leave the freeway and use alternate routes.  This 
+not only results in fewer vehicles being counted
+ by the monitoring systems, it also means the 
+delay that those vehicles experience is not counted.  And since the diverted vehicles often use 
+routes that are typically congested, the addition of those trips can mean significantly greater 
+than normal delays.  In addition, some quality 
+control procedures eliminate very low speed 
+data due to accuracy problems with the detectors when speeds are below 5 mph. 
+
+### Measure Overview
+
+p14
