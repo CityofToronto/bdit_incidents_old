@@ -105,7 +105,7 @@ def baselinePlot(inSegments, month, day, baseline, engine):
     for seg in segmentTimes[1:]:
         df.AvgMeasuredTime += seg.AvgMeasuredTime
         
-    plt.figure(figsize=(12,8),dpi=300)
+    plt.figure(figsize=(16,12),dpi=300)
     plt.plot(df.Timestamp, df.AvgMeasuredTime/60,'k')
     plt.plot(df.Timestamp, baseline.AvgMeasuredTime/60,'b')
     plt.fill_between(df.Timestamp.as_matrix(),
