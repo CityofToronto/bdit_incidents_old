@@ -20,17 +20,34 @@ fggSegmentsW = list(reversed(fggSegmentsE))
 
 def readSegments(inSegments, month, day, n, engine):
     '''
-    Returns list of dataframes containing bliptrack travel times for n days on inputted segments
+    Returns list of dataframes 
+    Each element is travel time on one segment
     '''
     dfList = []
     startDate = datetime.date(2015,month,day)
     endDate = startDate + timedelta(days=n)
-    strStartDate = startDate.strftime('%Y-%m-%d')
-    strEndDate = endDate.strftime('%Y-%m-%d')
+    
     for i in range(len(inSegments)-1):
         print('Query going in...')
-        strSQL = 'SELECT bluetooth.raw_data."Timestamp",bluetooth.raw_data."AvgMeasuredTime",bluetooth.raw_data."StartPointName",bluetooth.raw_data."EndPointName" FROM bluetooth.raw_data INNER JOIN bluetooth.ref_segments ON (bluetooth.raw_data."StartPointName" = bluetooth.ref_segments.orig_startpointname AND bluetooth.raw_data."EndPointName" = bluetooth.ref_segments.orig_endpointname) WHERE (bluetooth.ref_segments.startpointname = \''+inSegments[i]+'\' AND bluetooth.ref_segments.endpointname = \''+inSegments[i+1]+'\' AND bluetooth.raw_data."Timestamp" >= \''+strStartDate+'\' AND bluetooth.raw_data."Timestamp" < \''+strEndDate+'\')'
-        dfList.append(pandasql.read_sql(strSQL,engine))
+        strSQL = 'SELECT bluetooth.raw_data."Timestamp",'\
+        'bluetooth.raw_data."AvgMeasuredTime",'\
+        'bluetooth.raw_data."StartPointName",'\
+        'bluetooth.raw_data."EndPointName" '\
+        'FROM bluetooth.raw_data INNER JOIN bluetooth.ref_segments '\
+        'ON (bluetooth.raw_data."StartPointName" '\
+        '= bluetooth.ref_segments.orig_startpointname '\
+        'AND bluetooth.raw_data."EndPointName" '\
+        '= bluetooth.ref_segments.orig_endpointname) '\
+        'WHERE (bluetooth.ref_segments.startpointname = %(pt1)s '\
+        'AND bluetooth.ref_segments.endpointname = %(pt2)s '\
+        'AND bluetooth.raw_data."Timestamp" >= %(dstart)s '\
+        'AND bluetooth.raw_data."Timestamp" < %(dend)s)'
+        dfList.append(pandasql.read_sql(sql=strSQL,
+                                        params={'pt1':inSegments[i],
+                                                'pt2':inSegments[i+1],
+                                                'dstart':startDate,
+                                                'dend':endDate},
+                                        con=engine))
     return dfList
 
 def baseline(dfList,p):
@@ -54,6 +71,22 @@ def baseline(dfList,p):
         df.AvgMeasuredTime += seg.AvgMeasuredTime
     return ptList[0]
 
+def baselineSegments(dfList,p):
+    '''
+    takes list of dataframes, pivots to inputed percentile 
+    '''    
+    
+    ptList = []
+    for seg in dfList:
+        seg = seg[(seg.Timestamp.dt.dayofweek != 6) 
+                  & (seg.Timestamp.dt.dayofweek != 5) 
+                  & (seg.Timestamp.dt.dayofweek != 4) 
+                  & (seg.Timestamp.dt.dayofweek != 0)]
+        seg['Time'] = seg.Timestamp.apply(lambda x: x.time())
+        ptList.append(pd.pivot_table(seg,
+                                     index='Time',
+                                     aggfunc=lambda x: np.percentile(x, p)))
+    return ptList
 
 def baselineDrop(dfList):
     '''
@@ -124,4 +157,19 @@ def baselinePlot(inSegments, month, day, baseline, engine):
     integral = np.trapz(y=df.AvgMeasuredTime.as_matrix(), x=df.Timestamp.as_matrix()) - np.trapz(y=baseline.AvgMeasuredTime.as_matrix(),x=df.Timestamp.as_matrix())
     return integral
     
+def baselinePlotSegments(inSegments, month, day, baseline, engine):
+    
+    fig,ax = plt.subplots(5,1, figsize=(16,24))
+    segmentTimes = readSegments(inSegments, month, day,1, engine)
+    segmentTimes[0].Timestamp = pd.to_datetime(segmentTimes[0].Timestamp)
+    
+    for i in range(len(inSegments)-1):
+        ax[i].plot(segmentTimes[0].Timestamp,segmentTimes[i].AvgMeasuredTime/60)
+        ax[i].plot(segmentTimes[0].Timestamp,baseline[i].AvgMeasuredTime/60)
+        ax[i].set_ylim([0,20])
+    
+    return
+    
+#dvpN = readSegments(dvpSegmentsN,1,1,365,engine)    
+#baselineN = baselineSegments(dvpN,50)
 
