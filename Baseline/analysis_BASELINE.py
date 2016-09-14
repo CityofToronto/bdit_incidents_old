@@ -50,6 +50,18 @@ def readSegments(inSegments, month, day, n, engine):
                                         con=engine))
     return dfList
 
+def selectDateInc(month,day,data):
+    '''
+    Returns list of incident data dataframes for inputed date on inputted segment in form [selected direction, other direction]
+    '''
+    data.StartDateTime = pd.to_datetime(data.StartDateTime)
+    startDate = datetime.date(2015,month,day)
+    endDate = startDate + timedelta(days=1)
+    startDate = pd.to_datetime(startDate)
+    endDate = pd.to_datetime(endDate)
+    return (data[(data.StartDateTime >= startDate) 
+                 & (data.StartDateTime < endDate)])
+                 
 def baseline(dfList,p):
     '''
     takes list of dataframes, pivots to inputed percentile 
@@ -151,25 +163,78 @@ def baselinePlot(inSegments, month, day, baseline, engine):
                      df.AvgMeasuredTime.as_matrix()/60,
                      baseline.AvgMeasuredTime.as_matrix()/60,
                      where
-                     = (baseline.AvgMeasuredTime/60 < df.AvgMeasuredTime/60),
+                     = (baseline.AvgMeasuredTime/60 < df.AvgMeasuredTime/60), 
                      facecolor='red')    
     plt.show()
     integral = np.trapz(y=df.AvgMeasuredTime.as_matrix(), x=df.Timestamp.as_matrix()) - np.trapz(y=baseline.AvgMeasuredTime.as_matrix(),x=df.Timestamp.as_matrix())
     return integral
     
-def baselinePlotSegments(inSegments, month, day, baseline, engine):
+def baselinePlotSegments(inSegments, month, day, baseline, incData1, incData2, direction, engine):
     
-    fig,ax = plt.subplots(5,1, figsize=(16,24))
+    incDayData1 = selectDateInc(month,day,incData1)
+    incDayData2 = selectDateInc(month,day,incData2)
+    
     segmentTimes = readSegments(inSegments, month, day,1, engine)
     segmentTimes[0].Timestamp = pd.to_datetime(segmentTimes[0].Timestamp)
     
+    if(direction == 'SB' or direction == 'EB'):
+        inSegments = list(reversed(inSegments))
+    if(direction == 'SB' or direction == 'NB'):
+        start = 'bt-start'
+        end = 'bt-end'
+    if(direction == 'EB' or direction == 'WB'):
+        start = 'bt-start_1'
+        end = 'bt-end_1'
+    
+    fig,ax = plt.subplots(5,1, figsize=(8,12),sharex=True)
+    
     for i in range(len(inSegments)-1):
-        ax[i].plot(segmentTimes[0].Timestamp,segmentTimes[i].AvgMeasuredTime/60)
-        ax[i].plot(segmentTimes[0].Timestamp,baseline[i].AvgMeasuredTime/60)
+        ax[i].plot(segmentTimes[0].Timestamp, 
+                   segmentTimes[i].AvgMeasuredTime/60, 
+                   'k')
+        ax[i].plot(segmentTimes[0].Timestamp,
+                   baseline[i].AvgMeasuredTime/60,
+                   'k')
+        ax[i].fill_between(segmentTimes[0].Timestamp.as_matrix(), 
+                           segmentTimes[i].AvgMeasuredTime.as_matrix()/60, 
+                           baseline[i].AvgMeasuredTime.as_matrix()/60, 
+                           where 
+                           = (baseline[i].AvgMeasuredTime/60 
+                           < segmentTimes[i].AvgMeasuredTime/60), 
+                           facecolor='red')        
+        ax[i].fill_between(segmentTimes[0].Timestamp.as_matrix(), 
+                           segmentTimes[i].AvgMeasuredTime.as_matrix()/60, 
+                           baseline[i].AvgMeasuredTime.as_matrix()/60, 
+                           where 
+                           = (baseline[i].AvgMeasuredTime/60 
+                           > segmentTimes[i].AvgMeasuredTime/60), 
+                           facecolor='green')
+                         
+        incDayData1temp = incDayData1[(incDayData1[start] == inSegments[i+1]) 
+                                      & (incDayData1[end] == inSegments[i])]
+        incDayData2temp = incDayData2[(incDayData2[start] == inSegments[i+1]) 
+                                      & (incDayData2[end] == inSegments[i])]
+        for inc in incDayData1temp.StartDateTime:
+            ax[i].axvline(x=inc,
+                          color = 'k',  
+                          linewidth=1.5)
+        for inc in incDayData2temp.StartDateTime:
+            ax[i].axvline(x=inc, 
+                          color = 'k',
+                          linestyle='dashed', 
+                          linewidth=0.2)
+        
+        
+        
         ax[i].set_ylim([0,20])
     
+    plt.show()
     return
     
 #dvpN = readSegments(dvpSegmentsN,1,1,365,engine)    
 #baselineN = baselineSegments(dvpN,50)
 
+dvpIncNB = pd.read_csv('dvp-north-inc.csv')
+dvpIncSB = pd.read_csv('dvp-south-inc.csv')
+fggIncEB = pd.read_csv('fgg-east-inc.csv')
+fggIncWB = pd.read_csv('fgg-west-inc.csv')
