@@ -177,8 +177,8 @@ def baselinePlotSegments(inSegments, month, day, baseline, incData1, incData2, d
     segmentTimes = readSegments(inSegments, month, day,1, engine)
     segmentTimes[0].Timestamp = pd.to_datetime(segmentTimes[0].Timestamp)
     
-    if(direction == 'SB' or direction == 'EB'):
-        inSegments = list(reversed(inSegments))
+    #if(direction == 'SB' or direction == 'EB'):
+        #inSegments = list(reversed(inSegments))
     if(direction == 'SB' or direction == 'NB'):
         start = 'bt-start'
         end = 'bt-end'
@@ -209,11 +209,16 @@ def baselinePlotSegments(inSegments, month, day, baseline, incData1, incData2, d
                            = (baseline[i].AvgMeasuredTime/60 
                            > segmentTimes[i].AvgMeasuredTime/60), 
                            facecolor='green')
-                         
-        incDayData1temp = incDayData1[(incDayData1[start] == inSegments[i+1]) 
-                                      & (incDayData1[end] == inSegments[i])]
-        incDayData2temp = incDayData2[(incDayData2[start] == inSegments[i+1]) 
-                                      & (incDayData2[end] == inSegments[i])]
+        if(direction == 'SB' or direction == 'EB'):                 
+            incDayData1temp = incDayData1[(incDayData1[start] == inSegments[i]) 
+                                          & (incDayData1[end] == inSegments[i+1])]
+            incDayData2temp = incDayData2[(incDayData2[start] == inSegments[i]) 
+                                          & (incDayData2[end] == inSegments[i+1])]
+        else:
+            incDayData1temp = incDayData1[(incDayData1[start] == inSegments[i+1]) 
+                                          & (incDayData1[end] == inSegments[i])]
+            incDayData2temp = incDayData2[(incDayData2[start] == inSegments[i+1]) 
+                                          & (incDayData2[end] == inSegments[i])]
         for inc in incDayData1temp.StartDateTime:
             ax[i].axvline(x=inc,
                           color = 'k',  
@@ -224,9 +229,12 @@ def baselinePlotSegments(inSegments, month, day, baseline, incData1, incData2, d
                           linestyle='dashed', 
                           linewidth=0.2)
         
-        
-        
+        #if(direction == 'SB' or direction == 'EB'):
+            #inSegments = list(reversed(inSegments))
+        ax[i].title.set_text(inSegments[i]+' to '+inSegments[i+1])
         ax[i].set_ylim([0,20])
+        #if(direction == 'SB' or direction == 'EB'):
+            #inSegments = list(reversed(inSegments))
     
     plt.show()
     return
