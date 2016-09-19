@@ -228,21 +228,19 @@ def baselinePlotSegments(inSegments, month, day, baseline, incData1, incData2, d
                           color = 'k',
                           linestyle='dashed', 
                           linewidth=0.2)
-        
-        #if(direction == 'SB' or direction == 'EB'):
-            #inSegments = list(reversed(inSegments))
+                          
         ax[i].title.set_text(inSegments[i]+' to '+inSegments[i+1])
         ax[i].set_ylim([0,20])
-        #if(direction == 'SB' or direction == 'EB'):
-            #inSegments = list(reversed(inSegments))
     
     plt.show()
     return
     
-#dvpN = readSegments(dvpSegmentsN,1,1,365,engine)    
-#baselineN = baselineSegments(dvpN,50)
+dvpN = readSegments(dvpSegmentsN,1,1,365,engine)    
+baselineN = baselineSegments(dvpN,50)
 
 dvpIncNB = pd.read_csv('dvp-north-inc.csv')
 dvpIncSB = pd.read_csv('dvp-south-inc.csv')
 fggIncEB = pd.read_csv('fgg-east-inc.csv')
 fggIncWB = pd.read_csv('fgg-west-inc.csv')
+
+baselinePlotSegments(dvpSegmentsN, 5, 28, baselineN, dvpIncNB, dvpIncSB, 'NB', engine)
