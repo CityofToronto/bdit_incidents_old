@@ -7,13 +7,14 @@ import pandas.io.sql as pandasql
 from sqlalchemy import create_engine
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.style.use('seaborn-whitegrid')
+matplotlib.style.use('ggplot')
 
 
 engine = create_engine('postgresql://dolejar:dan@137.15.155.38:5432/bigdata_ah')
 
 segments=['A','B','B1','C','D','E','F','G','H','I','J','K']
 dvpSegmentsN = ['F','G','H','I','J','K']
+namesN = ['Dundas','Bayview','Don Mills','Wynford','Lawrence','York Mills']
 dvpSegmentsS = list(reversed(dvpSegmentsN))
 fggSegmentsE = ['A','B','B1','C','D','E','F']
 fggSegmentsW = list(reversed(fggSegmentsE))
@@ -169,7 +170,7 @@ def baselinePlot(inSegments, month, day, baseline, engine):
     integral = np.trapz(y=df.AvgMeasuredTime.as_matrix(), x=df.Timestamp.as_matrix()) - np.trapz(y=baseline.AvgMeasuredTime.as_matrix(),x=df.Timestamp.as_matrix())
     return integral
     
-def baselinePlotSegments(inSegments, month, day, baseline, incData1, incData2, direction, engine):
+def baselinePlotSegments(inSegments,segNames, month, day, baseline, incData1, incData2, direction, engine):
     
     incDayData1 = selectDateInc(month,day,incData1)
     incDayData2 = selectDateInc(month,day,incData2)
@@ -186,29 +187,33 @@ def baselinePlotSegments(inSegments, month, day, baseline, incData1, incData2, d
         start = 'bt-start_1'
         end = 'bt-end_1'
     
-    fig,ax = plt.subplots(5,1, figsize=(8,12),sharex=True)
+    fig,ax = plt.subplots(5,1, figsize=(15,12),sharex=True,dpi=600)
     
     for i in range(len(inSegments)-1):
         ax[i].plot(segmentTimes[0].Timestamp, 
                    segmentTimes[i].AvgMeasuredTime/60, 
-                   'k')
+                   'k',
+                   linewidth=2)
         ax[i].plot(segmentTimes[0].Timestamp,
                    baseline[i].AvgMeasuredTime/60,
-                   'k')
+                   'k',
+                   linewidth=0.5)
         ax[i].fill_between(segmentTimes[0].Timestamp.as_matrix(), 
                            segmentTimes[i].AvgMeasuredTime.as_matrix()/60, 
                            baseline[i].AvgMeasuredTime.as_matrix()/60, 
                            where 
                            = (baseline[i].AvgMeasuredTime/60 
                            < segmentTimes[i].AvgMeasuredTime/60), 
-                           facecolor='red')        
+                           facecolor='red',
+                           alpha = 0.2)        
         ax[i].fill_between(segmentTimes[0].Timestamp.as_matrix(), 
                            segmentTimes[i].AvgMeasuredTime.as_matrix()/60, 
                            baseline[i].AvgMeasuredTime.as_matrix()/60, 
                            where 
                            = (baseline[i].AvgMeasuredTime/60 
                            > segmentTimes[i].AvgMeasuredTime/60), 
-                           facecolor='green')
+                           facecolor='green',
+                           alpha = 0.2)
         if(direction == 'SB' or direction == 'EB'):                 
             incDayData1temp = incDayData1[(incDayData1[start] == inSegments[i]) 
                                           & (incDayData1[end] == inSegments[i+1])]
@@ -229,18 +234,19 @@ def baselinePlotSegments(inSegments, month, day, baseline, incData1, incData2, d
                           linestyle='dashed', 
                           linewidth=0.2)
                           
-        ax[i].title.set_text(inSegments[i]+' to '+inSegments[i+1])
+        ax[i].title.set_text(segNames[i]+' to '+segNames[i+1])
         ax[i].set_ylim([0,20])
     
+    plt.savefig(direction+'_'+str(month)+'_'+str(day)+'.png',format='png',transparent=True)
     plt.show()
     return
     
-dvpN = readSegments(dvpSegmentsN,1,1,365,engine)    
-baselineN = baselineSegments(dvpN,50)
+#dvpN = readSegments(dvpSegmentsN,1,1,365,engine)    
+#baselineN = baselineSegments(dvpN,50)
 
 dvpIncNB = pd.read_csv('dvp-north-inc.csv')
 dvpIncSB = pd.read_csv('dvp-south-inc.csv')
 fggIncEB = pd.read_csv('fgg-east-inc.csv')
 fggIncWB = pd.read_csv('fgg-west-inc.csv')
 
-baselinePlotSegments(dvpSegmentsN, 5, 28, baselineN, dvpIncNB, dvpIncSB, 'NB', engine)
+#baselinePlotSegments(dvpSegmentsN, namesN, 5, 28, baselineN, dvpIncNB, dvpIncSB, 'NB', engine)
