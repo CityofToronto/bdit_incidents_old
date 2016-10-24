@@ -930,6 +930,11 @@ colnames(update10_datetime)[colnames(update10_datetime) == "date_and_time"] <- "
 colnames(update11_datetime)[colnames(update11_datetime) == "date_and_time"] <- "update11_date_and_time"
 
 
+
+### DAN STEP 4 ###
+
+
+
 #Calling 'extract_info' function to split columns below to create new columns for number and type traffic lanes, reason and respondents
 #Ensure removal of double spaces in column for correct data extraction
 test_df2 <- extract_info_original(new_df, OrigEventDescription)
